@@ -4,40 +4,40 @@ A full-stack web app that shows live soil moisture, temperature and light
 readings from field sensors. ESP32 devices (or the included simulator) send
 readings to a REST API, and the dashboard refreshes itself every 5 seconds.
 
-## Features
-- Flask backend with a REST API on a SQLite database
-- Session-based authentication; every API route requires an active login
-- Passwords stored as hashes (Werkzeug), never in plain text
-- Input validation on all sensor data (types and value ranges)
-- Auto-refreshing dashboard (every 5 seconds) with the latest reading per
-  device and a recent-readings table
-- 13 automated tests (Python `unittest`) run against an isolated test database
-- Device simulator: streams data from 2 simulated ESP32 devices, so you can
-  demo without hardware
-- Ready to deploy on Render using Gunicorn
+## Hardware / Tech
+- ESP32 sensor nodes (soil moisture, temperature and light sensors)
+- Python, Flask (backend and REST API)
+- SQLite (database)
+- HTML, CSS, JavaScript (dashboard)
+- Gunicorn and Render (deployment)
 
-## Tech stack
-Python, Flask, SQLite, HTML/CSS/JavaScript, Gunicorn, Render
+## How it works
+The ESP32 devices send soil moisture, temperature and light readings over
+HTTP to the Flask API, which validates the data and stores it in SQLite.
+The dashboard page reads the latest data from the API every 5 seconds and
+shows the newest reading for each device along with a recent-readings table.
+Users must log in first: the app uses session-based authentication, passwords
+are stored as hashes, and every API route requires an active session.
 
-## Run locally
-```
-pip install -r requirements.txt
-python app.py
-```
-Open http://127.0.0.1:5000, click **Create an account**, then log in.
-
-## Try it with the simulator
-In a second terminal:
-```
-python simulator.py --url http://127.0.0.1:5000 --user demo --password demo123 --register
-```
-Two simulated devices (`esp32-field-1`, `esp32-field-2`) start posting
-readings and appear on the dashboard.
-
-## Run the tests
-```
-python -m unittest -v
-```
+## Setup
+1. Install the requirements:
+   ```
+   pip install -r requirements.txt
+   ```
+2. Start the app:
+   ```
+   python app.py
+   ```
+3. Open http://127.0.0.1:5000, click **Create an account**, then log in.
+4. To demo without hardware, run the simulator in a second terminal. It
+   streams data from 2 simulated ESP32 devices:
+   ```
+   python simulator.py --url http://127.0.0.1:5000 --user demo --password demo123 --register
+   ```
+5. Run the 13 automated tests:
+   ```
+   python -m unittest -v
+   ```
 
 ## API
 All routes need a logged-in session.
@@ -45,7 +45,7 @@ All routes need a logged-in session.
 | Method | Route | Description |
 |---|---|---|
 | POST | `/api/readings` | Add a reading |
-| GET | `/api/readings?device_id=&limit=` | List recent readings (newest first) |
+| GET | `/api/readings?device_id=&limit=` | List recent readings |
 | GET | `/api/latest` | Latest reading for each device |
 | GET | `/health` | Health check (no login needed) |
 
@@ -53,27 +53,13 @@ Example body for `POST /api/readings`:
 ```json
 {"device_id": "esp32-field-1", "soil_moisture": 45.5, "temperature": 28.2, "light": 31000}
 ```
-Valid ranges: soil moisture 0-100 %, temperature -40 to 85 C, light 0-100000 lux.
 
-## Deploy on Render
-1. Push this repo to GitHub.
-2. In Render, choose **New > Blueprint** and select the repo. It reads
-   `render.yaml`, installs the requirements, and starts `gunicorn app:app`.
-3. Render generates a `SECRET_KEY` for you.
+## Deployment
+Deploy on Render: push the repo to GitHub, choose **New > Blueprint** in
+Render and select the repo. It reads `render.yaml` and starts the app with
+`gunicorn app:app`. On the free plan the SQLite data resets when the service
+restarts.
 
-Note: on Render's free plan the SQLite file is not permanent and resets when
-the service restarts. For permanent data, attach a persistent disk or move
-to a hosted database such as PostgreSQL.
-
-## Project structure
-```
-app.py            Flask app, database, auth, REST API
-templates/        Login/register page and dashboard page
-static/style.css  Styles
-simulator.py      Fake ESP32 devices for demos
-test_app.py       13 unit tests
-render.yaml       Render deployment config
-```
 
 ## Author
 Joel Shibu Daniel
